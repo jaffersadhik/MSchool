@@ -1,0 +1,26 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS:-change-me}
+      MYSQL_DATABASE: mschool
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes: [dbdata:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","localhost","-p${DB_PASS:-change-me}"]
+      interval: 5s
+      retries: 20
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      DB_URL: jdbc:mysql://db:3306/mschool?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Kolkata
+      DB_USER: root
+      DB_PASS: ${DB_PASS:-change-me}
+      MSCHOOL_ZONE: Asia/Kolkata
+    ports: ["8080:8080"]
+volumes:
+  dbdata:
